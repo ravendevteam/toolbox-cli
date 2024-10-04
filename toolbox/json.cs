@@ -1,24 +1,24 @@
 using System.Text.Json.Serialization;
 
 namespace  toolbox;
-
-public abstract class Package(string name, string version, string url, string description)
+    
+public class Package
 {
     [JsonPropertyName("name")]
-    public string Name { get; set; } = name;
+    public string Name { get; set; }
 
     [JsonPropertyName("version")]
-    public string Version { get; set; } = version;
+    public string Version { get; set; }
 
     [JsonPropertyName("url")]
-    public string Url { get; set; } = url;
+    public string Url { get; set; }
 
     [JsonPropertyName("description")]
-    public string Description { get; set; } = description;
+    public string Description { get; set; }
 }
 
-public class PackageList(List<Package> packages)
+public class PackageList
 {
     [JsonPropertyName("packages")]
-    public List<Package> Packages { get; set; } = packages;
+    public List<Package> Packages { get; set; }
 }

@@ -37,7 +37,9 @@ abstract class Program
 
     static void Install(string appName)
     {
-        string appDataPath = "Not Initialized";
+        string executableDirectory = "Not Initialized";
+        string executablePath = "Not Initialized";
+        string shortcutPath = "Not Initialized";
 
         // Read the file content
         string json = File.ReadAllText(_packageListPath);
@@ -71,18 +73,29 @@ abstract class Program
         // Get the app data path, and check if the folder exists. If it doesn't, create it.
         if (Environment.OSVersion.Platform == PlatformID.Win32NT)
         {
-            appDataPath = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
-            appDataPath = string.Concat(appDataPath + Path.DirectorySeparatorChar + "ravensoftware" +
+            executableDirectory = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
+            executableDirectory = string.Concat(executableDirectory + Path.DirectorySeparatorChar + "ravensoftware" +
                                         Path.DirectorySeparatorChar + appName);
+            
+            executablePath = executableDirectory + Path.DirectorySeparatorChar + appName + ".exe";
+            
+            shortcutPath = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
+            shortcutPath = string.Concat(shortcutPath + Path.DirectorySeparatorChar + "Microsoft" +
+                                         Path.DirectorySeparatorChar + "Windows" + Path.DirectorySeparatorChar +
+                                         "Start Menu" + Path.DirectorySeparatorChar + "Programs" +
+                                         Path.DirectorySeparatorChar + appName + ".lnk");
         }
 
-        if (!Directory.Exists(appDataPath))
-            Directory.CreateDirectory(appDataPath);
+        if (!Directory.Exists(executableDirectory))
+            Directory.CreateDirectory(executableDirectory);
 
         Console.WriteLine($"Installing {appName}...");
-
-        DownloadFile(package.Url, appDataPath + Path.DirectorySeparatorChar + appName + ".exe");
-        Console.WriteLine($"{appName} has been installed to {appDataPath}");
+        DownloadFile(package.Url, executablePath);
+        
+        // Create a shortcut
+        Console.WriteLine("Creating shortcut...");
+        
+        Console.WriteLine($"{appName} has been installed to {executableDirectory}");
     }
 
     static void Update()
