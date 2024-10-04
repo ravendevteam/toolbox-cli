@@ -10,14 +10,17 @@ class Program
 {
     static void Main(string[] args)
     {
-        if (args.Length == 0)
+        if (args[0] == "install")
+            Install(args[1]);
+        
+        else if (args[0] == "update")
+            Update();
+
+        else
         {
             Console.WriteLine("No arguments were passed.");
             return;
         }
-
-        if (args[0] == "install")
-            Install(args[1]);
     }
 
     static void Install(string appName)
@@ -27,16 +30,15 @@ class Program
         if (Environment.OSVersion.Platform == PlatformID.Win32NT)
         {
             appDataPath = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
-            appDataPath = string.Concat(appDataPath + Path.DirectorySeparatorChar + appName);
+            appDataPath = string.Concat(appDataPath + Path.DirectorySeparatorChar + "ravensoftware"+ Path.DirectorySeparatorChar + appName);
         }
-
-        Console.WriteLine($"Installing {appName}...");
+        
         if (!Directory.Exists(appDataPath))
         {
             Directory.CreateDirectory(appDataPath);
         }
 
-        Console.WriteLine(appDataPath);
+        Console.WriteLine($"Installing {appName}...");
         string url = "https://github.com/ravendevteam/scratchpad/releases/download/v1.1.0/scratchpad.exe";
 
         DownloadFile(url, appDataPath + Path.DirectorySeparatorChar + appName + ".exe");
@@ -45,8 +47,23 @@ class Program
 
     static void Update()
     {
-        Console.WriteLine("Updating toolbox...");
-        //DownloadFile();
+        string appDataPath = "Not Initialized";
+        string updateUrl =
+            "https://cdn.discordapp.com/attachments/1184970674524139571/1291818096855617588/idk.json?ex=67017adb&is=6700295b&hm=2f947935b16111f78e00baacf8d8fb9eaaf5db09413e97faef1f702310c9d740&";
+
+        if (Environment.OSVersion.Platform == PlatformID.Win32NT)
+        {
+            appDataPath = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
+            appDataPath = string.Concat(appDataPath + Path.DirectorySeparatorChar + "ravensoftware"+ Path.DirectorySeparatorChar + "toolbox");
+        }
+        
+        if (!Directory.Exists(appDataPath))
+        {
+            Directory.CreateDirectory(appDataPath);
+        }
+
+        Console.WriteLine("Updating packages list...");
+        DownloadFile(updateUrl, appDataPath + Path.DirectorySeparatorChar + "packages.json");
     }
 
     static void DownloadFile(string url, string fileName)
