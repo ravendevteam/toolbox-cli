@@ -31,6 +31,9 @@ abstract class Program
         
         else if (args[0] == "remove")
             Remove(args[1]);
+        
+        else if (args[0] == "upgrade")
+            Upgrade(args[1]);
 
         else
         {
@@ -162,6 +165,60 @@ abstract class Program
         
         Console.WriteLine($"{appName} has been removed.");
     }
+    
+    static void Upgrade(string appName)
+    {
+        string executableDirectory = "Not Initialized";
+        string executablePath = "Not Initialized";
+
+        // Read the file content
+        string json = File.ReadAllText(_packageListPath);
+
+        // Deserialize the JSON content into C# objects
+        var packageList = JsonSerializer.Deserialize<PackageList>(json);
+
+        var package = packageList?.Packages.FirstOrDefault(p => p.Name.Equals(appName, StringComparison.OrdinalIgnoreCase));
+        
+        if (package == null)
+        {
+            Console.WriteLine($"Package {appName} not found in the package list.");
+            return;
+        }
+        
+        Console.WriteLine($"Name: {package.Name}");
+        Console.WriteLine($"Version: {package.Version}");
+        Console.WriteLine($"URL: {package.Url}");
+        Console.WriteLine($"Description: {package.Description}");
+        Console.WriteLine("Okay to upgrade? Y/n");
+        
+        string? response = Console.ReadLine();
+        response = response?.ToLower();
+        
+        if (response != "y" && response != "yes" && response != "")
+        {
+            Console.WriteLine("Cancelling...");
+            return;
+        }
+        
+        // Get the app data path, and check if the folder exists. If it doesn't, create it.
+        if (Environment.OSVersion.Platform == PlatformID.Win32NT)
+        {
+            executableDirectory = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
+            executableDirectory = string.Concat(executableDirectory + Path.DirectorySeparatorChar + "ravensoftware" +
+                                        Path.DirectorySeparatorChar + appName);
+            
+            executablePath = executableDirectory + Path.DirectorySeparatorChar + appName + ".exe";
+        }
+
+        if (!Directory.Exists(executableDirectory))
+            Directory.CreateDirectory(executableDirectory);
+
+        Console.WriteLine($"Upgrading {appName}...");
+        DownloadFile(package.Url, executablePath);
+        
+        Console.WriteLine($"{appName} has been upgraded.");
+    }
+    
 
     static void Update()
     {
