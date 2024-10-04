@@ -28,6 +28,9 @@ abstract class Program
 
         else if (args[0] == "update")
             Update();
+        
+        else if (args[0] == "remove")
+            Remove(args[1]);
 
         else
         {
@@ -97,6 +100,68 @@ abstract class Program
         
         Console.WriteLine($"{appName} has been installed to {executableDirectory}");
     }
+    
+    static void Remove(string appName)
+    {
+        string executableDirectory = "Not Initialized";
+        string executablePath = "Not Initialized";
+        string shortcutPath = "Not Initialized";
+        
+        string json = File.ReadAllText(_packageListPath);
+
+        // Deserialize the JSON content into C# objects
+        var packageList = JsonSerializer.Deserialize<PackageList>(json);
+
+        var package = packageList?.Packages.FirstOrDefault(p => p.Name.Equals(appName, StringComparison.OrdinalIgnoreCase));
+        
+        if (package == null)
+        {
+            Console.WriteLine($"Package {appName} not found in the package list.");
+            return;
+        }
+
+        // Get the app data path, and check if the folder exists. If it doesn't, create it.
+        if (Environment.OSVersion.Platform == PlatformID.Win32NT)
+        {
+            executableDirectory = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
+            executableDirectory = string.Concat(executableDirectory + Path.DirectorySeparatorChar + "ravensoftware" +
+                                        Path.DirectorySeparatorChar + appName);
+            
+            executablePath = executableDirectory + Path.DirectorySeparatorChar + appName + ".exe";
+            
+            shortcutPath = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
+            shortcutPath = string.Concat(shortcutPath + Path.DirectorySeparatorChar + "Microsoft" +
+                                         Path.DirectorySeparatorChar + "Windows" + Path.DirectorySeparatorChar +
+                                         "Start Menu" + Path.DirectorySeparatorChar + "Programs" +
+                                         Path.DirectorySeparatorChar + appName + ".lnk");
+        }
+
+        if (!Directory.Exists(executableDirectory))
+        {
+            Console.WriteLine($"{appName} is not installed.");
+            return;
+        }
+        
+        Console.WriteLine($"Name: {package.Name}");
+        Console.WriteLine("Okay to remove? Y/n");
+        
+        string? response = Console.ReadLine();
+        response = response?.ToLower();
+        
+        if (response != "y" && response != "yes" && response != "")
+        {
+            Console.WriteLine("Cancelling...");
+            return;
+        }
+
+        Console.WriteLine($"Removing {appName}...");
+        Directory.Delete(executableDirectory, true);
+        
+        // Remove the shortcut
+        Console.WriteLine("Removing shortcut...");
+        
+        Console.WriteLine($"{appName} has been removed.");
+    }
 
     static void Update()
     {
@@ -126,9 +191,29 @@ abstract class Program
     static void DownloadFile(string url, string fileName)
     {
 #pragma warning disable SYSLIB0014
-        // Perhaps use httpclient instead? This works so let's keep it for now.
         using var client = new WebClient();
+
+        // Subscribe to the DownloadProgressChanged event
+        client.DownloadProgressChanged += (sender, e) =>
+        {
+            // Update the progress bar
+            Console.Write($"\rDownloading: [{new string('#', e.ProgressPercentage / 2)}{new string(' ', 50 - e.ProgressPercentage / 2)}] {e.ProgressPercentage}%");
+        };
+
+        // Subscribe to the DownloadFileCompleted event
+        client.DownloadFileCompleted += (sender, e) =>
+        {
+            Console.WriteLine("\nDownload completed!");
+        };
+
+        // Start the download asynchronously
+        client.DownloadFileAsync(new Uri(url), fileName);
 #pragma warning restore SYSLIB0014
-        client.DownloadFile(url, fileName);
+
+        // Keep the application running until the download is complete
+        while (client.IsBusy)
+        {
+            Thread.Sleep(100);
+        }
     }
 }
