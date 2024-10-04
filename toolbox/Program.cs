@@ -1,25 +1,26 @@
 ﻿using System.Net;
+using System.Text.Json;
 
 namespace toolbox;
 
 abstract class Program
 {
+    static string _packageListPath = "bad";
+
     static void Main(string[] args)
     {
-        string jsonFilePath = "bad";
-
         if (Environment.OSVersion.Platform == PlatformID.Win32NT)
         {
-            jsonFilePath = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
-            jsonFilePath = string.Concat(jsonFilePath + Path.DirectorySeparatorChar + "ravensoftware" +
-                                         Path.DirectorySeparatorChar + "toolbox" + Path.DirectorySeparatorChar +
-                                         "packages.json");
+            _packageListPath = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
+            _packageListPath = string.Concat(_packageListPath + Path.DirectorySeparatorChar + "ravensoftware" +
+                                            Path.DirectorySeparatorChar + "toolbox" + Path.DirectorySeparatorChar +
+                                            "packages.json");
         }
-        
-        if(!File.Exists(jsonFilePath) && args[0] != "update")
+
+        if (!File.Exists(_packageListPath) && args[0] != "update")
         {
             Console.WriteLine("The packages.json file does not exist. Please run the update command.");
-                return;
+            return;
         }
 
         if (args[0] == "install")
@@ -38,6 +39,35 @@ abstract class Program
     {
         string appDataPath = "Not Initialized";
 
+        // Read the file content
+        string json = File.ReadAllText(_packageListPath);
+
+        // Deserialize the JSON content into C# objects
+        var packageList = JsonSerializer.Deserialize<PackageList>(json);
+
+        var package = packageList?.Packages.FirstOrDefault(p => p.Name.Equals(appName, StringComparison.OrdinalIgnoreCase));
+        
+        if (package == null)
+        {
+            Console.WriteLine($"Package {appName} not found in the package list.");
+            return;
+        }
+        
+        Console.WriteLine($"Name: {package.Name}");
+        Console.WriteLine($"Version: {package.Version}");
+        Console.WriteLine($"URL: {package.Url}");
+        Console.WriteLine($"Description: {package.Description}");
+        Console.WriteLine("Okay to install? Y/n");
+        
+        string? response = Console.ReadLine();
+        response = response?.ToLower();
+        
+        if (response != "y" && response != "yes" && response != "")
+        {
+            Console.WriteLine("Cancelling...");
+            return;
+        }
+        
         // Get the app data path, and check if the folder exists. If it doesn't, create it.
         if (Environment.OSVersion.Platform == PlatformID.Win32NT)
         {
@@ -47,14 +77,11 @@ abstract class Program
         }
 
         if (!Directory.Exists(appDataPath))
-        {
             Directory.CreateDirectory(appDataPath);
-        }
 
         Console.WriteLine($"Installing {appName}...");
-        string url = "https://github.com/ravendevteam/scratchpad/releases/download/v1.1.0/scratchpad.exe";
 
-        DownloadFile(url, appDataPath + Path.DirectorySeparatorChar + appName + ".exe");
+        DownloadFile(package.Url, appDataPath + Path.DirectorySeparatorChar + appName + ".exe");
         Console.WriteLine($"{appName} has been installed to {appDataPath}");
     }
 

@@ -1,16 +1,24 @@
-namespace toolbox;
+using System.Text.Json.Serialization;
 
-using System.Collections.Generic;
+namespace  toolbox;
 
-public class Package
+public abstract class Package(string name, string version, string url, string description)
 {
-    public string Name { get; set; }
-    public string Version { get; set; }
-    public string Url { get; set; }
-    public string Description { get; set; }
+    [JsonPropertyName("name")]
+    public string Name { get; set; } = name;
+
+    [JsonPropertyName("version")]
+    public string Version { get; set; } = version;
+
+    [JsonPropertyName("url")]
+    public string Url { get; set; } = url;
+
+    [JsonPropertyName("description")]
+    public string Description { get; set; } = description;
 }
 
-public class Packages
+public class PackageList(List<Package> packages)
 {
-    public List<Package> PackagesList { get; set; }
+    [JsonPropertyName("packages")]
+    public List<Package> Packages { get; set; } = packages;
 }
