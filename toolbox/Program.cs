@@ -41,6 +41,9 @@ namespace toolbox
 
             else if (args[0] == "upgrade")
                 Upgrade(args[1]);
+            
+            else if (args[0] == "list")
+                List();
 
             else if (args[0] == "sha256")
                 Console.WriteLine(GetChecksum(args[1]));
@@ -261,6 +264,28 @@ namespace toolbox
 
             Console.WriteLine("\nPackage list has been updated.");
         }
+        
+        static void List()
+        {
+            string json = File.ReadAllText(_packageListPath ?? throw new InvalidOperationException());
+
+            // Deserialize the JSON content into C# objects
+            var packageList = JsonSerializer.Deserialize<PackageList>(json);
+
+            if (packageList == null)
+            {
+                Console.WriteLine("No packages found.");
+                return;
+            }
+
+            foreach (var package in packageList.Packages)
+            {
+                Console.WriteLine($"Name: {package.Name}");
+                Console.WriteLine($"Version: {package.Version}");
+                Console.WriteLine($"Description: {package.Description}");
+                Console.WriteLine();
+            }
+        }
 
         static void UpdateCheck()
         {
@@ -329,6 +354,7 @@ namespace toolbox
                 return "File does not exist";
 
 #pragma warning disable SYSLIB0021
+            // ReSharper disable once ConvertToUsingDeclaration
             using (FileStream stream = File.OpenRead(file))
             {
                 SHA256Managed sha = new SHA256Managed();
