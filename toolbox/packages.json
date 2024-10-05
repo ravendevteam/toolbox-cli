@@ -8,7 +8,10 @@
       "description": "Simple, professional plaintext editor.",
       "sha256": "0f8ec1847ec310575f52e96b29ecec689d7445a6bfbb275724ae1d010344fe5b",
       "requirepath": false,
-      "shortcut": true
+      "shortcut": true,
+      "os": [
+        "Win32NT"
+      ]
     },
     {
       "name": "Toolbox",
@@ -17,7 +20,10 @@
       "description": "Raven Package Manager",
       "sha256": "0ab53a8b7f530931dc22021b6619e24a0a20beedde58a179c683f3ff562c62b4",
       "requirepath": true,
-      "shortcut": false
+      "shortcut": false,
+      "os": [
+        "Win32NT"
+      ]
     }
   ]
 }

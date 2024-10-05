@@ -95,6 +95,12 @@ namespace toolbox
                 return;
             }
 
+            if (package.OsList.Contains(Environment.OSVersion.Platform.ToString()))
+            {
+                Console.WriteLine($"Package {package.Name} is not available for your OS.");
+                return;
+            }
+
             InfoChecker(package.Name);
             Console.WriteLine("Okay to install? Y/n");
 
@@ -385,7 +391,7 @@ namespace toolbox
             foreach (var package in packageList.Packages)
             {
                 InfoChecker(package.Name);
-                Console.WriteLine();
+                Console.WriteLine("\n");
             }
         }
 
@@ -440,6 +446,26 @@ namespace toolbox
 
             string addToPath = package.RequirePath ? "Yes" : "No";
             string isCli = !package.Shortcut ? "Yes" : "No";
+            List<string> osList = new List<string>();
+
+            foreach (string os in package.OsList)
+            {
+                switch (os)
+                {
+                    case "Win32NT":
+                        osList.Add("Windows");
+                        break;
+                    case "Unix":
+                        osList.Add("Linux/Unix");
+                        break;
+                    case "MacOSX":
+                        osList.Add("macOS");
+                        break;
+                    default:
+                        osList.Add(os);
+                        break;
+                }
+            }
 
             Console.WriteLine($"Name: {package.Name}");
             Console.WriteLine($"Version: {package.Version}");
@@ -447,6 +473,14 @@ namespace toolbox
             Console.WriteLine($"Description: {package.Description}");
             Console.WriteLine($"Will be added to path: {addToPath}");
             Console.WriteLine($"Is a CLI app: {isCli}");
+            Console.Write("Available for: ");
+            foreach (string os in osList)
+            {
+                if (os.Equals(osList.Last()))
+                    Console.Write($"{os}");
+                else
+                    Console.Write($"{os}, ");
+            }
         }
 
         static void DownloadFile(string url, string fileName)

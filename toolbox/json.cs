@@ -24,6 +24,9 @@ public class Package
     
     [JsonPropertyName("shortcut")]
     public bool Shortcut { get; set; }
+    
+    [JsonPropertyName("os")]
+    public List<string> OsList { get; set; }
 }
 
 public class PackageList
