@@ -10,10 +10,11 @@ Made for Windows 10/11, MacOS, and Linux.
 
 ## Installation
 See [Releases](https://github.com/ravendevteam/scratchpad/releases). Download the latest version for your platform.
+Toolbox can install itself onto your system. To do this, just run `toolbox.exe install toolbox` on Windows, and `./toolbox install toolbox` on macOS or Linux.
 
 To update:
-- For Windows, run `toolbox.exe update` in Command Prompt.
-- For MacOS or Linux, run `./toolbox update` in your terminal.
+- For Windows, run `toolbox update` in Command Prompt.
+- For MacOS or Linux, run `toolbox update` in your terminal.
 
 ## Authors & Contributors
 
