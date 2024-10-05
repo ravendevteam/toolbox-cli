@@ -12,7 +12,7 @@ namespace toolbox
     {
         private static string? _packageListPath;
         private static string? _appdata;
-        private const string Version = "1.0.1";
+        private const string Version = "1.0.2";
 
         static void Main(string[] args)
         {
@@ -181,7 +181,7 @@ namespace toolbox
                 return;
             }
 
-            if (appName == "Toolbox")
+            if (appName == "toolbox-cli")
             {
                 Console.WriteLine("Cannot remove Toolbox, please delete the toolbox folder manually.");
                 return;
