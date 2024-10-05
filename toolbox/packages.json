@@ -16,7 +16,7 @@
     {
       "name": "toolbox-cli",
       "version": "1.0.2",
-      "url": "https://github.com/ravendevteam/toolbox/releases/download/v1.0.2/toolbox.exe",
+      "url": "https://github.com/ravendevteam/toolbox-cli/releases/download/v1.0.2/toolbox.exe",
       "description": "The CLI backend for Launchpad, Raven's package manager.",
       "sha256": "1c3d978e350a623fe702313b6c4ed4743a442b86749768a9100e5f46e0be7382",
       "requirepath": true,
