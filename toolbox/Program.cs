@@ -149,15 +149,6 @@ namespace toolbox
 
         static void Remove(string appName)
         {
-            string executableDirectory = string.Concat(_appdata + Path.DirectorySeparatorChar +
-                                                       "ravensoftware" +
-                                                       Path.DirectorySeparatorChar + appName);
-
-            string shortcutPath = string.Concat(_appdata + Path.DirectorySeparatorChar + "Microsoft" +
-                                                Path.DirectorySeparatorChar + "Windows" + Path.DirectorySeparatorChar +
-                                                "Start Menu" + Path.DirectorySeparatorChar + "Programs" +
-                                                Path.DirectorySeparatorChar + appName + ".lnk");
-
             string json = File.ReadAllText(_packageListPath ?? throw new InvalidOperationException());
 
             // Deserialize the JSON content into C# objects
@@ -166,9 +157,27 @@ namespace toolbox
             var package =
                 packageList?.Packages.FirstOrDefault(p => p.Name.Equals(appName, StringComparison.OrdinalIgnoreCase));
 
+            string executableDirectory = string.Concat(_appdata + Path.DirectorySeparatorChar +
+                                                       "ravensoftware" +
+                                                       Path.DirectorySeparatorChar + package.Name.ToLower());
+
+            string startMenuFile = string.Concat(_appdata + Path.DirectorySeparatorChar + "Microsoft" +
+                                                 Path.DirectorySeparatorChar + "Windows" + Path.DirectorySeparatorChar +
+                                                 "Start Menu" + Path.DirectorySeparatorChar + "Programs" +
+                                                 Path.DirectorySeparatorChar + package.Name + ".lnk");
+
+            string desktopFile = string.Concat(Environment.GetFolderPath(Environment.SpecialFolder.Desktop)) +
+                                 Path.DirectorySeparatorChar + package.Name + ".lnk";
+
             if (package == null)
             {
-                Console.WriteLine($"Package {appName} not found in the package list.");
+                Console.WriteLine($"Package {package.Name} not found in the package list.");
+                return;
+            }
+
+            if (appName == "Toolbox")
+            {
+                Console.WriteLine("Cannot remove Toolbox, please delete the toolbox folder manually.");
                 return;
             }
 
@@ -216,10 +225,13 @@ namespace toolbox
             }
 
             // Remove the shortcut
-            if (File.Exists(shortcutPath))
+            if (File.Exists(startMenuFile))
             {
                 Console.WriteLine("Removing shortcut...");
-                File.Delete(shortcutPath);
+                File.Delete(startMenuFile);
+
+                if (File.Exists(desktopFile))
+                    File.Delete(desktopFile);
             }
 
             Console.WriteLine($"{appName} has been removed.");
