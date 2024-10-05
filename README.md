@@ -12,8 +12,8 @@ Made for Windows 10/11, MacOS, and Linux.
 See [Releases](https://github.com/ravendevteam/scratchpad/releases). Download the latest version for your platform.
 
 To update:
-- For Windows, run `toolbox.exe update`
-- For MacOS or Linux, run `./toolbox update`
+- For Windows, run `toolbox.exe update` in Command Prompt.
+- For MacOS or Linux, run `./toolbox update` in your terminal.
 
 ## Authors & Contributors
 
