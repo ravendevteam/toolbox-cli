@@ -2,7 +2,7 @@
   "updateurl": "https://raw.githubusercontent.com/ravendevteam/toolbox/refs/heads/main/toolbox/packages.json",
   "packages": [
     {
-      "name": "scratchpad",
+      "name": "Scratchpad",
       "version": "1.1.0",
       "url": "https://github.com/ravendevteam/scratchpad/releases/download/v1.1.0/scratchpad.exe",
       "description": "Simple, professional plaintext editor.",
@@ -11,7 +11,7 @@
       "shortcut": true
     },
     {
-      "name": "toolbox",
+      "name": "Toolbox",
       "version": "1.0.1",
       "url": "https://github.com/ravendevteam/toolbox/releases/download/v1.0.0/toolbox.exe",
       "description": "Raven Package Manager",

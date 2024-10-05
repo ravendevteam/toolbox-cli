@@ -31,42 +31,43 @@ namespace toolbox
 
             UpdateCheck();
 
-            if (args.Length == 0)
+            try
+            {
+                switch (args[0])
+                {
+                    case "install":
+                        Install(args[1]);
+                        break;
+
+                    case "update":
+                        Update();
+                        break;
+
+                    case "remove":
+                        Remove(args[1]);
+                        break;
+
+                    case "upgrade":
+                        Upgrade(args[1]);
+                        break;
+
+                    case "list":
+                        List();
+                        break;
+
+                    case "sha256":
+                        Console.WriteLine($"Checksum of {args[1]}: \n{GetChecksum(args[1])}");
+                        break;
+
+                    default:
+                        Console.WriteLine("Invalid command.");
+                        Console.WriteLine("Usage: toolbox [install|update|remove|upgrade|list|sha256] <appname>");
+                        break;
+                }
+            }
+            catch (IndexOutOfRangeException)
             {
                 Console.WriteLine("Usage: toolbox [install|update|remove|upgrade|list|sha256] <appname>");
-                return;
-            }
-
-            switch (args[0])
-            {
-                case "install":
-                    Install(args[1]);
-                    break;
-
-                case "update":
-                    Update();
-                    break;
-
-                case "remove":
-                    Remove(args[1]);
-                    break;
-
-                case "upgrade":
-                    Upgrade(args[1]);
-                    break;
-
-                case "list":
-                    List();
-                    break;
-
-                case "sha256":
-                    Console.WriteLine($"Checksum of {args[1]}: \n{GetChecksum(args[1])}");
-                    break;
-
-                default:
-                    Console.WriteLine("Invalid command.");
-                    Console.WriteLine("Usage: toolbox [install|update|remove|upgrade|list|sha256] <appname>");
-                    break;
             }
         }
 
@@ -74,9 +75,9 @@ namespace toolbox
         {
             string executableDirectory = string.Concat(_appdata + Path.DirectorySeparatorChar +
                                                        "ravensoftware" +
-                                                       Path.DirectorySeparatorChar + appName);
+                                                       Path.DirectorySeparatorChar + appName.ToLower());
 
-            string executablePath = executableDirectory + Path.DirectorySeparatorChar + appName + ".exe";
+            string executablePath = executableDirectory + Path.DirectorySeparatorChar + appName.ToLower() + ".exe";
 
 
             // Read the file content
@@ -109,7 +110,7 @@ namespace toolbox
             if (!Directory.Exists(executableDirectory))
                 Directory.CreateDirectory(executableDirectory);
 
-            Console.WriteLine($"Installing {appName}...");
+            Console.WriteLine($"Installing {package.Name}...");
             DownloadFile(package.Url, executablePath);
 
             // Check the checksum
@@ -143,7 +144,7 @@ namespace toolbox
             if (package.Shortcut)
                 ShortcutMaker(executablePath, package.Name, package.Description);
 
-            Console.WriteLine($"{appName} has been installed to {executableDirectory}");
+            Console.WriteLine($"{package.Name} has been installed to {executableDirectory}");
         }
 
         static void Remove(string appName)
@@ -228,9 +229,9 @@ namespace toolbox
         {
             string executableDirectory = string.Concat(_appdata + Path.DirectorySeparatorChar +
                                                        "ravensoftware" +
-                                                       Path.DirectorySeparatorChar + appName);
+                                                       Path.DirectorySeparatorChar + appName.ToLower());
 
-            string executablePath = executableDirectory + Path.DirectorySeparatorChar + appName + ".exe";
+            string executablePath = executableDirectory + Path.DirectorySeparatorChar + appName.ToLower() + ".exe";
 
             // Read the file content
             string json = File.ReadAllText(_packageListPath ?? throw new InvalidOperationException());
@@ -262,7 +263,7 @@ namespace toolbox
             if (!Directory.Exists(executableDirectory))
                 Directory.CreateDirectory(executableDirectory);
 
-            Console.WriteLine($"Upgrading {appName}...");
+            Console.WriteLine($"Upgrading {package.Name}...");
             DownloadFile(package.Url, executablePath);
 
             // Check the checksum
@@ -291,7 +292,7 @@ namespace toolbox
                 }
             }
 
-            Console.WriteLine($"{appName} has been upgraded.");
+            Console.WriteLine($"{package.Name} has been upgraded.");
         }
 
 
@@ -304,7 +305,7 @@ namespace toolbox
                                               Path.DirectorySeparatorChar + "toolbox");
             string packagePath = toolboxDir + Path.DirectorySeparatorChar + "packages.json";
             string lastUpdatePath = String.Concat(toolboxDir + Path.DirectorySeparatorChar + "lastupdate");
-            
+
             if (!Directory.Exists(toolboxDir))
                 Directory.CreateDirectory(toolboxDir);
 
@@ -338,18 +339,19 @@ namespace toolbox
             }
 
             Console.WriteLine("\nPackage list has been updated.");
-            
+
             // Read the file content
             string jsonToolbox = File.ReadAllText(_packageListPath ?? throw new InvalidOperationException());
-            
+
             // Deserialize the JSON content into C# objects
             var packageListToolbox = JsonSerializer.Deserialize<PackageList>(jsonToolbox);
-            
+
             var toolbox =
-                packageListToolbox?.Packages.FirstOrDefault(p => p.Name.Equals("toolbox", StringComparison.OrdinalIgnoreCase));
-            
+                packageListToolbox?.Packages.FirstOrDefault(p =>
+                    p.Name.Equals("toolbox", StringComparison.OrdinalIgnoreCase));
+
             // Check if the toolbox needs to be upgraded
-            if (toolbox.Version != Version)
+            if (toolbox?.Version != Version)
             {
                 Console.WriteLine("Toolbox is outdated. Please run 'toolbox upgrade toolbox' as soon as possible.");
             }
@@ -371,6 +373,7 @@ namespace toolbox
             foreach (var package in packageList.Packages)
             {
                 InfoChecker(package.Name);
+                Console.WriteLine();
             }
         }
 
@@ -382,7 +385,8 @@ namespace toolbox
                                                   Path.DirectorySeparatorChar + "toolbox" +
                                                   Path.DirectorySeparatorChar + "lastupdate");
 
-            if (!File.Exists(lastUpdatePath) || !File.Exists(_packageListPath) || !File.ReadAllText(_packageListPath).Contains("updateurl"))
+            if (!File.Exists(lastUpdatePath) || !File.Exists(_packageListPath) ||
+                !File.ReadAllText(_packageListPath).Contains("updateurl"))
             {
                 Console.WriteLine("Automatically updating Raven Toolbox");
                 Update();
@@ -435,28 +439,41 @@ namespace toolbox
 
         static void DownloadFile(string url, string fileName)
         {
-#pragma warning disable SYSLIB0014
-            using var client = new WebClient();
-
-            // Subscribe to the DownloadProgressChanged event
-            client.DownloadProgressChanged += (_, e) =>
+            try
             {
-                // Update the progress bar
-                Console.Write(
-                    $"\rDownloading: [{new string('#', e.ProgressPercentage / 2)}{new string(' ', 50 - e.ProgressPercentage / 2)}] {e.ProgressPercentage}%");
-            };
+#pragma warning disable SYSLIB0014
+                using var client = new WebClient();
 
-            // Subscribe to the DownloadFileCompleted event
-            client.DownloadFileCompleted += (_, _) => { Console.WriteLine("\nDownload completed!"); };
+                // Subscribe to the DownloadProgressChanged event
+                client.DownloadProgressChanged += (_, e) =>
+                {
+                    // Update the progress bar
+                    Console.Write(
+                        $"\rDownloading: [{new string('#', e.ProgressPercentage / 2)}{new string(' ', 50 - e.ProgressPercentage / 2)}] {e.ProgressPercentage}%");
+                };
 
-            // Start the download asynchronously
-            client.DownloadFileAsync(new Uri(url), fileName);
+                // Subscribe to the DownloadFileCompleted event
+                client.DownloadFileCompleted += (_, _) => { Console.WriteLine("\nDownload completed!"); };
+
+                // Start the download asynchronously
+                client.DownloadFileAsync(new Uri(url), fileName);
 #pragma warning restore SYSLIB0014
 
-            // Keep the application running until the download is complete
-            while (client.IsBusy)
+                // Keep the application running until the download is complete
+                while (client.IsBusy)
+                {
+                    Thread.Sleep(100);
+                }
+            }
+            catch (UnauthorizedAccessException)
             {
-                Thread.Sleep(100);
+                Console.WriteLine("Error downloading the file.");
+                Console.WriteLine("Please close all apps that are using the file.");
+            }
+            catch (WebException)
+            {
+                Console.WriteLine("Error downloading the file.");
+                Console.WriteLine("Please check your internet connection.");
             }
         }
 
@@ -480,19 +497,23 @@ namespace toolbox
         {
             // ReSharper disable once SuspiciousTypeConversion.Global
             IShellLink link = (IShellLink)new ShellLink();
-            string shortCutDir = string.Concat(_appdata + Path.DirectorySeparatorChar + "Microsoft" +
-                                               Path.DirectorySeparatorChar + "Windows" + Path.DirectorySeparatorChar +
-                                               "Start Menu" + Path.DirectorySeparatorChar + "Programs" +
-                                               Path.DirectorySeparatorChar + name + ".lnk");
+            string startMenuFile = string.Concat(_appdata + Path.DirectorySeparatorChar + "Microsoft" +
+                                                 Path.DirectorySeparatorChar + "Windows" + Path.DirectorySeparatorChar +
+                                                 "Start Menu" + Path.DirectorySeparatorChar + "Programs" +
+                                                 Path.DirectorySeparatorChar + name + ".lnk");
 
-            // setup shortcut information
+            string desktopFile = string.Concat(Environment.GetFolderPath(Environment.SpecialFolder.Desktop)) +
+                                 Path.DirectorySeparatorChar + name + ".lnk";
+
+            // Setup shortcut information
             link.SetDescription(description);
             link.SetPath(path);
 
-            // save it
+            // Save it
             // ReSharper disable once SuspiciousTypeConversion.Global
             IPersistFile file = (IPersistFile)link;
-            file.Save(shortCutDir, false);
+            file.Save(startMenuFile, false);
+            File.Copy(startMenuFile, desktopFile, true);
         }
     }
 
