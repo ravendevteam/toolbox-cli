@@ -12,6 +12,7 @@ namespace toolbox
     {
         private static string? _packageListPath;
         private static string? _appdata;
+        private const string Version = "1.0.1";
 
         static void Main(string[] args)
         {
@@ -57,11 +58,11 @@ namespace toolbox
                 case "list":
                     List();
                     break;
-                
+
                 case "sha256":
                     Console.WriteLine($"Checksum of {args[1]}: \n{GetChecksum(args[1])}");
                     break;
-                
+
                 default:
                     Console.WriteLine("Invalid command.");
                     Console.WriteLine("Usage: toolbox [install|update|remove|upgrade|list|sha256] <appname>");
@@ -245,6 +246,7 @@ namespace toolbox
                 Console.WriteLine($"Package {appName} not found in the package list.");
                 return;
             }
+
             InfoChecker(package.Name);
             Console.WriteLine("Okay to upgrade? Y/n");
 
@@ -302,24 +304,27 @@ namespace toolbox
                                               Path.DirectorySeparatorChar + "toolbox");
             string packagePath = toolboxDir + Path.DirectorySeparatorChar + "packages.json";
             string lastUpdatePath = String.Concat(toolboxDir + Path.DirectorySeparatorChar + "lastupdate");
-
-
+            
             if (!Directory.Exists(toolboxDir))
                 Directory.CreateDirectory(toolboxDir);
 
             if (File.Exists(packagePath))
             {
-                // Read the file content
-                string json = File.ReadAllText(_packageListPath ?? throw new InvalidOperationException());
+                // Deserialize the JSON content into C# objects, if empty use the default URL
+                try
+                {
+                    string json = File.ReadAllText(_packageListPath ?? throw new InvalidOperationException());
+                    var packageList = JsonSerializer.Deserialize<PackageList>(json);
+                    string pattern = @"^(https?|ftp)://[\w.-]+(\.[\w.-]+)+[\w\-.,@?^=%&:/~+#]*$";
+                    Regex regex = new Regex(pattern, RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
-                // Deserialize the JSON content into C# objects
-                var packageList = JsonSerializer.Deserialize<PackageList>(json);
-
-                string pattern = @"^(https?|ftp)://[\w.-]+(\.[\w.-]+)+[\w\-.,@?^=%&:/~+#]*$";
-                Regex regex = new Regex(pattern, RegexOptions.Compiled | RegexOptions.IgnoreCase);
-
-                if (regex.IsMatch(packageList!.UpdateUrl))
-                    updateUrl = packageList.UpdateUrl;
+                    if (regex.IsMatch(packageList!.UpdateUrl))
+                        updateUrl = packageList.UpdateUrl;
+                }
+                catch (JsonException)
+                {
+                    Console.WriteLine("Error reading the package list. Using the default URL.");
+                }
             }
 
             // Download the packages list.
@@ -333,6 +338,21 @@ namespace toolbox
             }
 
             Console.WriteLine("\nPackage list has been updated.");
+            
+            // Read the file content
+            string jsonToolbox = File.ReadAllText(_packageListPath ?? throw new InvalidOperationException());
+            
+            // Deserialize the JSON content into C# objects
+            var packageListToolbox = JsonSerializer.Deserialize<PackageList>(jsonToolbox);
+            
+            var toolbox =
+                packageListToolbox?.Packages.FirstOrDefault(p => p.Name.Equals("toolbox", StringComparison.OrdinalIgnoreCase));
+            
+            // Check if the toolbox needs to be upgraded
+            if (toolbox.Version != Version)
+            {
+                Console.WriteLine("Toolbox is outdated. Please run 'toolbox upgrade toolbox' as soon as possible.");
+            }
         }
 
         static void List()
@@ -362,10 +382,9 @@ namespace toolbox
                                                   Path.DirectorySeparatorChar + "toolbox" +
                                                   Path.DirectorySeparatorChar + "lastupdate");
 
-
-            if (!File.Exists(lastUpdatePath))
+            if (!File.Exists(lastUpdatePath) || !File.Exists(_packageListPath) || !File.ReadAllText(_packageListPath).Contains("updateurl"))
             {
-                Console.WriteLine("Automatically updating Raven Toolbox (file doesn't exist)");
+                Console.WriteLine("Automatically updating Raven Toolbox");
                 Update();
             }
 
@@ -382,12 +401,12 @@ namespace toolbox
 
                 if (timeDif > 86400)
                 {
-                    Console.WriteLine("Automatically updating Raven Toolbox (time is more than 86400)");
+                    Console.WriteLine("Automatically updating Raven Toolbox");
                     Update();
                 }
             }
         }
-        
+
         static void InfoChecker(string appName)
         {
             string json = File.ReadAllText(_packageListPath ?? throw new InvalidOperationException());
@@ -402,7 +421,7 @@ namespace toolbox
             {
                 return;
             }
-            
+
             string addToPath = package.RequirePath ? "Yes" : "No";
             string isCli = !package.Shortcut ? "Yes" : "No";
 
