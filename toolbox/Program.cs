@@ -4,23 +4,28 @@ using System.Runtime.InteropServices.ComTypes;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
-using toolbox;
+using System.Text.RegularExpressions;
 
 namespace toolbox
 {
-
     abstract class Program
     {
-        static string _packageListPath = "bad";
+        private static string? _packageListPath;
+        private static string? appdata;
 
         static void Main(string[] args)
         {
             if (Environment.OSVersion.Platform == PlatformID.Win32NT)
             {
-                _packageListPath = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
-                _packageListPath = string.Concat(_packageListPath + Path.DirectorySeparatorChar + "ravensoftware" +
+                appdata = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
+                _packageListPath = string.Concat(appdata + Path.DirectorySeparatorChar + "ravensoftware" +
                                                  Path.DirectorySeparatorChar + "toolbox" + Path.DirectorySeparatorChar +
                                                  "packages.json");
+            }
+
+            else
+            {
+                throw new InvalidOperationException("Wrong OS");
             }
 
             UpdateCheck();
@@ -48,9 +53,12 @@ namespace toolbox
 
         static void Install(string appName)
         {
-            string executableDirectory = "Not Initialized";
-            string executablePath = "Not Intialized";
-            string shortcutPath;
+            string executableDirectory = string.Concat(appdata + Path.DirectorySeparatorChar +
+                                                       "ravensoftware" +
+                                                       Path.DirectorySeparatorChar + appName);
+
+            string executablePath = executableDirectory + Path.DirectorySeparatorChar + appName + ".exe";
+
 
             // Read the file content
             string json = File.ReadAllText(_packageListPath);
@@ -82,23 +90,6 @@ namespace toolbox
                 return;
             }
 
-            // Get the app data path, and check if the folder exists. If it doesn't, create it.
-            if (Environment.OSVersion.Platform == PlatformID.Win32NT)
-            {
-                executableDirectory = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
-                executableDirectory = string.Concat(executableDirectory + Path.DirectorySeparatorChar +
-                                                    "ravensoftware" +
-                                                    Path.DirectorySeparatorChar + appName);
-
-                executablePath = executableDirectory + Path.DirectorySeparatorChar + appName + ".exe";
-
-                shortcutPath = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
-                shortcutPath = string.Concat(shortcutPath + Path.DirectorySeparatorChar + "Microsoft" +
-                                             Path.DirectorySeparatorChar + "Windows" + Path.DirectorySeparatorChar +
-                                             "Start Menu" + Path.DirectorySeparatorChar + "Programs" +
-                                             Path.DirectorySeparatorChar + appName + ".lnk");
-            }
-
             if (!Directory.Exists(executableDirectory))
                 Directory.CreateDirectory(executableDirectory);
 
@@ -115,15 +106,23 @@ namespace toolbox
 
             // Create a shortcut
             Console.WriteLine("Creating shortcut...");
+            ShortcutMaker(executablePath, package.Name, package.Description);
 
             Console.WriteLine($"{appName} has been installed to {executableDirectory}");
         }
 
         static void Remove(string appName)
         {
-            string executableDirectory = "Not Initialized";
-            string executablePath = "Not Initialized";
-            string shortcutPath = "Not Initialized";
+            string executableDirectory = string.Concat(appdata + Path.DirectorySeparatorChar +
+                                                       "ravensoftware" +
+                                                       Path.DirectorySeparatorChar + appName);
+
+            string executablePath = executableDirectory + Path.DirectorySeparatorChar + appName + ".exe";
+
+            string shortcutPath = string.Concat(appdata + Path.DirectorySeparatorChar + "Microsoft" +
+                                                Path.DirectorySeparatorChar + "Windows" + Path.DirectorySeparatorChar +
+                                                "Start Menu" + Path.DirectorySeparatorChar + "Programs" +
+                                                Path.DirectorySeparatorChar + appName + ".lnk");
 
             string json = File.ReadAllText(_packageListPath);
 
@@ -137,23 +136,6 @@ namespace toolbox
             {
                 Console.WriteLine($"Package {appName} not found in the package list.");
                 return;
-            }
-
-            // Get the app data path, and check if the folder exists. If it doesn't, create it.
-            if (Environment.OSVersion.Platform == PlatformID.Win32NT)
-            {
-                executableDirectory = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
-                executableDirectory = string.Concat(executableDirectory + Path.DirectorySeparatorChar +
-                                                    "ravensoftware" +
-                                                    Path.DirectorySeparatorChar + appName);
-
-                executablePath = executableDirectory + Path.DirectorySeparatorChar + appName + ".exe";
-
-                shortcutPath = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
-                shortcutPath = string.Concat(shortcutPath + Path.DirectorySeparatorChar + "Microsoft" +
-                                             Path.DirectorySeparatorChar + "Windows" + Path.DirectorySeparatorChar +
-                                             "Start Menu" + Path.DirectorySeparatorChar + "Programs" +
-                                             Path.DirectorySeparatorChar + appName + ".lnk");
             }
 
             if (!Directory.Exists(executableDirectory))
@@ -179,14 +161,18 @@ namespace toolbox
 
             // Remove the shortcut
             Console.WriteLine("Removing shortcut...");
+            File.Delete(shortcutPath);
 
             Console.WriteLine($"{appName} has been removed.");
         }
 
         static void Upgrade(string appName)
         {
-            string executableDirectory = "Not Initialized";
-            string executablePath = "Not Initialized";
+            string executableDirectory = string.Concat(appdata + Path.DirectorySeparatorChar +
+                                                       "ravensoftware" +
+                                                       Path.DirectorySeparatorChar + appName);
+
+            string executablePath = executableDirectory + Path.DirectorySeparatorChar + appName + ".exe";
 
             // Read the file content
             string json = File.ReadAllText(_packageListPath);
@@ -218,17 +204,6 @@ namespace toolbox
                 return;
             }
 
-            // Get the app data path, and check if the folder exists. If it doesn't, create it.
-            if (Environment.OSVersion.Platform == PlatformID.Win32NT)
-            {
-                executableDirectory = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
-                executableDirectory = string.Concat(executableDirectory + Path.DirectorySeparatorChar +
-                                                    "ravensoftware" +
-                                                    Path.DirectorySeparatorChar + appName);
-
-                executablePath = executableDirectory + Path.DirectorySeparatorChar + appName + ".exe";
-            }
-
             if (!Directory.Exists(executableDirectory))
                 Directory.CreateDirectory(executableDirectory);
 
@@ -249,28 +224,36 @@ namespace toolbox
 
         static void Update()
         {
-            string appDataPath = "Not Initialized";
             string updateUrl =
                 "https://raw.githubusercontent.com/ravendevteam/toolbox/refs/heads/main/toolbox/packages.json";
-            string lastUpdatePath = "bad";
 
-            // Get the app data path, and check if the folder exists. If it doesn't, create it.
-            if (Environment.OSVersion.Platform == PlatformID.Win32NT)
-            {
-                appDataPath = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
-                appDataPath = string.Concat(appDataPath + Path.DirectorySeparatorChar + "ravensoftware" +
-                                            Path.DirectorySeparatorChar + "toolbox");
-                lastUpdatePath = String.Concat(appDataPath + Path.DirectorySeparatorChar + "lastupdate");
-            }
+            string toolboxDir = string.Concat(appdata + Path.DirectorySeparatorChar + "ravensoftware" +
+                                               Path.DirectorySeparatorChar + "toolbox");
+            string packagePath = toolboxDir + Path.DirectorySeparatorChar + "packages.json";
+            string lastUpdatePath = String.Concat(toolboxDir + Path.DirectorySeparatorChar + "lastupdate");
 
-            if (!Directory.Exists(appDataPath))
+
+            if (!Directory.Exists(toolboxDir))
+                Directory.CreateDirectory(toolboxDir);
+
+            if (File.Exists(packagePath))
             {
-                Directory.CreateDirectory(appDataPath);
+                // Read the file content
+                string json = File.ReadAllText(_packageListPath);
+
+                // Deserialize the JSON content into C# objects
+                var packageList = JsonSerializer.Deserialize<PackageList>(json);
+                
+                string pattern = @"^(https?|ftp)://[\w.-]+(\.[\w.-]+)+[\w\-.,@?^=%&:/~+#]*$";
+                Regex regex = new Regex(pattern, RegexOptions.Compiled | RegexOptions.IgnoreCase);
+                
+                if(regex.IsMatch(packageList.UpdateUrl))
+                    updateUrl = packageList.UpdateUrl;
             }
 
             // Download the packages list.
             Console.WriteLine("Updating package list...");
-            DownloadFile(updateUrl, appDataPath + Path.DirectorySeparatorChar + "packages.json");
+            DownloadFile(updateUrl, packagePath);
 
             // Update the lastupdate file
             using (StreamWriter outputFile = new StreamWriter(lastUpdatePath))
@@ -284,23 +267,11 @@ namespace toolbox
         static void UpdateCheck()
         {
             long timeNow = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
-            string appDataPath;
-            string lastUpdatePath;
 
-            // Get the app data path, and check if the folder exists. If it doesn't, create it.
-            if (Environment.OSVersion.Platform == PlatformID.Win32NT)
-            {
-                appDataPath = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
-                appDataPath = String.Concat(appDataPath + Path.DirectorySeparatorChar + "ravensoftware" +
-                                            Path.DirectorySeparatorChar + "toolbox");
+            string lastUpdatePath = String.Concat(appdata + Path.DirectorySeparatorChar + "ravensoftware" +
+                                                  Path.DirectorySeparatorChar + "toolbox" +
+                                                  Path.DirectorySeparatorChar + "lastupdate");
 
-                lastUpdatePath = String.Concat(appDataPath + Path.DirectorySeparatorChar + "lastupdate");
-            }
-
-            else
-            {
-                throw new InvalidOperationException("Wrong OS");
-            }
 
             if (!File.Exists(lastUpdatePath))
             {
@@ -366,18 +337,22 @@ namespace toolbox
                 return BitConverter.ToString(checksum).Replace("-", String.Empty).ToLower();
             }
         }
-        
-        static void ShortcutMaker(string path, string name, string description, string directory)
+
+        static void ShortcutMaker(string path, string name, string description)
         {
             IShellLink link = (IShellLink)new ShellLink();
+            string shortCutDir = string.Concat(appdata + Path.DirectorySeparatorChar + "Microsoft" +
+                                               Path.DirectorySeparatorChar + "Windows" + Path.DirectorySeparatorChar +
+                                               "Start Menu" + Path.DirectorySeparatorChar + "Programs" +
+                                               Path.DirectorySeparatorChar + name + ".lnk");
 
             // setup shortcut information
-            link.SetDescription("My Description");
+            link.SetDescription(description);
             link.SetPath(path);
 
             // save it
             IPersistFile file = (IPersistFile)link;
-            file.Save(Path.Combine(directory, Path.Combine(name, ".lnk")), false);
+            file.Save(shortCutDir, false);
         }
     }
 

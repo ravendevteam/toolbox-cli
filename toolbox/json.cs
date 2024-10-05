@@ -24,4 +24,6 @@ public class PackageList
 {
     [JsonPropertyName("packages")]
     public List<Package> Packages { get; set; }
+    [JsonPropertyName("updateurl")]
+    public string UpdateUrl { get; set; }
 }
