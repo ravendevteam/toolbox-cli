@@ -11,14 +11,14 @@ namespace toolbox
     abstract class Program
     {
         private static string? _packageListPath;
-        private static string? appdata;
+        private static string? _appdata;
 
         static void Main(string[] args)
         {
             if (Environment.OSVersion.Platform == PlatformID.Win32NT)
             {
-                appdata = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
-                _packageListPath = string.Concat(appdata + Path.DirectorySeparatorChar + "ravensoftware" +
+                _appdata = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
+                _packageListPath = string.Concat(_appdata + Path.DirectorySeparatorChar + "ravensoftware" +
                                                  Path.DirectorySeparatorChar + "toolbox" + Path.DirectorySeparatorChar +
                                                  "packages.json");
             }
@@ -53,7 +53,7 @@ namespace toolbox
 
         static void Install(string appName)
         {
-            string executableDirectory = string.Concat(appdata + Path.DirectorySeparatorChar +
+            string executableDirectory = string.Concat(_appdata + Path.DirectorySeparatorChar +
                                                        "ravensoftware" +
                                                        Path.DirectorySeparatorChar + appName);
 
@@ -61,7 +61,7 @@ namespace toolbox
 
 
             // Read the file content
-            string json = File.ReadAllText(_packageListPath);
+            string json = File.ReadAllText(_packageListPath ?? throw new InvalidOperationException());
 
             // Deserialize the JSON content into C# objects
             var packageList = JsonSerializer.Deserialize<PackageList>(json);
@@ -113,18 +113,16 @@ namespace toolbox
 
         static void Remove(string appName)
         {
-            string executableDirectory = string.Concat(appdata + Path.DirectorySeparatorChar +
+            string executableDirectory = string.Concat(_appdata + Path.DirectorySeparatorChar +
                                                        "ravensoftware" +
                                                        Path.DirectorySeparatorChar + appName);
 
-            string executablePath = executableDirectory + Path.DirectorySeparatorChar + appName + ".exe";
-
-            string shortcutPath = string.Concat(appdata + Path.DirectorySeparatorChar + "Microsoft" +
+            string shortcutPath = string.Concat(_appdata + Path.DirectorySeparatorChar + "Microsoft" +
                                                 Path.DirectorySeparatorChar + "Windows" + Path.DirectorySeparatorChar +
                                                 "Start Menu" + Path.DirectorySeparatorChar + "Programs" +
                                                 Path.DirectorySeparatorChar + appName + ".lnk");
 
-            string json = File.ReadAllText(_packageListPath);
+            string json = File.ReadAllText(_packageListPath ?? throw new InvalidOperationException());
 
             // Deserialize the JSON content into C# objects
             var packageList = JsonSerializer.Deserialize<PackageList>(json);
@@ -168,14 +166,14 @@ namespace toolbox
 
         static void Upgrade(string appName)
         {
-            string executableDirectory = string.Concat(appdata + Path.DirectorySeparatorChar +
+            string executableDirectory = string.Concat(_appdata + Path.DirectorySeparatorChar +
                                                        "ravensoftware" +
                                                        Path.DirectorySeparatorChar + appName);
 
             string executablePath = executableDirectory + Path.DirectorySeparatorChar + appName + ".exe";
 
             // Read the file content
-            string json = File.ReadAllText(_packageListPath);
+            string json = File.ReadAllText(_packageListPath ?? throw new InvalidOperationException());
 
             // Deserialize the JSON content into C# objects
             var packageList = JsonSerializer.Deserialize<PackageList>(json);
@@ -227,7 +225,7 @@ namespace toolbox
             string updateUrl =
                 "https://raw.githubusercontent.com/ravendevteam/toolbox/refs/heads/main/toolbox/packages.json";
 
-            string toolboxDir = string.Concat(appdata + Path.DirectorySeparatorChar + "ravensoftware" +
+            string toolboxDir = string.Concat(_appdata + Path.DirectorySeparatorChar + "ravensoftware" +
                                                Path.DirectorySeparatorChar + "toolbox");
             string packagePath = toolboxDir + Path.DirectorySeparatorChar + "packages.json";
             string lastUpdatePath = String.Concat(toolboxDir + Path.DirectorySeparatorChar + "lastupdate");
@@ -239,7 +237,7 @@ namespace toolbox
             if (File.Exists(packagePath))
             {
                 // Read the file content
-                string json = File.ReadAllText(_packageListPath);
+                string json = File.ReadAllText(_packageListPath ?? throw new InvalidOperationException());
 
                 // Deserialize the JSON content into C# objects
                 var packageList = JsonSerializer.Deserialize<PackageList>(json);
@@ -247,7 +245,7 @@ namespace toolbox
                 string pattern = @"^(https?|ftp)://[\w.-]+(\.[\w.-]+)+[\w\-.,@?^=%&:/~+#]*$";
                 Regex regex = new Regex(pattern, RegexOptions.Compiled | RegexOptions.IgnoreCase);
                 
-                if(regex.IsMatch(packageList.UpdateUrl))
+                if(regex.IsMatch(packageList!.UpdateUrl))
                     updateUrl = packageList.UpdateUrl;
             }
 
@@ -268,7 +266,7 @@ namespace toolbox
         {
             long timeNow = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
 
-            string lastUpdatePath = String.Concat(appdata + Path.DirectorySeparatorChar + "ravensoftware" +
+            string lastUpdatePath = String.Concat(_appdata + Path.DirectorySeparatorChar + "ravensoftware" +
                                                   Path.DirectorySeparatorChar + "toolbox" +
                                                   Path.DirectorySeparatorChar + "lastupdate");
 
@@ -304,7 +302,7 @@ namespace toolbox
             using var client = new WebClient();
 
             // Subscribe to the DownloadProgressChanged event
-            client.DownloadProgressChanged += (sender, e) =>
+            client.DownloadProgressChanged += (_, e) =>
             {
                 // Update the progress bar
                 Console.Write(
@@ -312,7 +310,7 @@ namespace toolbox
             };
 
             // Subscribe to the DownloadFileCompleted event
-            client.DownloadFileCompleted += (sender, e) => { Console.WriteLine("\nDownload completed!"); };
+            client.DownloadFileCompleted += (_, _) => { Console.WriteLine("\nDownload completed!"); };
 
             // Start the download asynchronously
             client.DownloadFileAsync(new Uri(url), fileName);
@@ -330,9 +328,11 @@ namespace toolbox
             if (!File.Exists(file))
                 return "File does not exist";
 
+#pragma warning disable SYSLIB0021
             using (FileStream stream = File.OpenRead(file))
             {
                 SHA256Managed sha = new SHA256Managed();
+#pragma warning restore SYSLIB0021
                 byte[] checksum = sha.ComputeHash(stream);
                 return BitConverter.ToString(checksum).Replace("-", String.Empty).ToLower();
             }
@@ -340,8 +340,9 @@ namespace toolbox
 
         static void ShortcutMaker(string path, string name, string description)
         {
+            // ReSharper disable once SuspiciousTypeConversion.Global
             IShellLink link = (IShellLink)new ShellLink();
-            string shortCutDir = string.Concat(appdata + Path.DirectorySeparatorChar + "Microsoft" +
+            string shortCutDir = string.Concat(_appdata + Path.DirectorySeparatorChar + "Microsoft" +
                                                Path.DirectorySeparatorChar + "Windows" + Path.DirectorySeparatorChar +
                                                "Start Menu" + Path.DirectorySeparatorChar + "Programs" +
                                                Path.DirectorySeparatorChar + name + ".lnk");
@@ -351,6 +352,7 @@ namespace toolbox
             link.SetPath(path);
 
             // save it
+            // ReSharper disable once SuspiciousTypeConversion.Global
             IPersistFile file = (IPersistFile)link;
             file.Save(shortCutDir, false);
         }
@@ -369,7 +371,6 @@ namespace toolbox
     {
         void GetPath([Out, MarshalAs(UnmanagedType.LPWStr)] StringBuilder pszFile, int cchMaxPath, out IntPtr pfd,
             int fFlags);
-
         void GetIDList(out IntPtr ppidl);
         void SetIDList(IntPtr pidl);
         void GetDescription([Out, MarshalAs(UnmanagedType.LPWStr)] StringBuilder pszName, int cchMaxName);
