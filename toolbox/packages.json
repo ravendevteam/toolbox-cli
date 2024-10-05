@@ -18,7 +18,7 @@
       "version": "1.0.2",
       "url": "https://github.com/ravendevteam/toolbox/releases/download/v1.0.2/toolbox.exe",
       "description": "The CLI backend for Launchpad, Raven's package manager.",
-      "sha256": "0ab53a8b7f530931dc22021b6619e24a0a20beedde58a179c683f3ff562c62b4",
+      "sha256": "1c3d978e350a623fe702313b6c4ed4743a442b86749768a9100e5f46e0be7382",
       "requirepath": true,
       "shortcut": false,
       "os": [
