@@ -106,6 +106,24 @@ namespace toolbox
                 File.Delete(executablePath);
                 return;
             }
+            
+            // Add to PATH
+            if (package.RequirePath)
+            {
+                string? currentPath = Environment.GetEnvironmentVariable("PATH", EnvironmentVariableTarget.User);
+
+                // Check if the new directory is already in the PATH
+                if (!currentPath.Contains(executableDirectory))
+                {
+                    // Append the new directory to the PATH
+                    string updatedPath = currentPath + ";" + executableDirectory;
+
+                    // Set the updated PATH environment variable
+                    Environment.SetEnvironmentVariable("PATH", updatedPath, EnvironmentVariableTarget.User);
+
+                    Console.WriteLine($"Added {executableDirectory} to the user PATH.");
+                }
+            }
 
             // Create a shortcut
             Console.WriteLine("Creating shortcut...");
@@ -159,6 +177,28 @@ namespace toolbox
 
             Console.WriteLine($"Removing {appName}...");
             Directory.Delete(executableDirectory, true);
+            
+            // Remove from PATH
+            if (package.RequirePath)
+            {
+                // Get the current user PATH environment variable
+                string? currentPath = Environment.GetEnvironmentVariable("PATH", EnvironmentVariableTarget.User);
+
+                // Check if the directory exists in the PATH
+                if (currentPath.Contains(executableDirectory))
+                {
+                    // Remove the directory from the PATH
+                    string updatedPath = currentPath.Replace(executableDirectory, "").Replace(";;", ";");
+
+                    // Remove any trailing or leading semicolons
+                    updatedPath = updatedPath.Trim(';');
+
+                    // Set the updated PATH environment variable
+                    Environment.SetEnvironmentVariable("PATH", updatedPath, EnvironmentVariableTarget.User);
+
+                    Console.WriteLine($"Removed {executableDirectory} from the user PATH.");
+                }
+            }
 
             // Remove the shortcut
             Console.WriteLine("Removing shortcut...");
@@ -217,6 +257,24 @@ namespace toolbox
                 Console.WriteLine("Checksums do not match. Exiting...");
                 File.Delete(executablePath);
                 return;
+            }
+            
+            // Add to PATH
+            if (package.RequirePath)
+            {
+                string? currentPath = Environment.GetEnvironmentVariable("PATH", EnvironmentVariableTarget.User);
+
+                // Check if the new directory is already in the PATH
+                if (!currentPath.Contains(executableDirectory))
+                {
+                    // Append the new directory to the PATH
+                    string updatedPath = currentPath + ";" + executableDirectory;
+
+                    // Set the updated PATH environment variable
+                    Environment.SetEnvironmentVariable("PATH", updatedPath, EnvironmentVariableTarget.User);
+
+                    Console.WriteLine($"Added {executableDirectory} to the user PATH.");
+                }
             }
 
             Console.WriteLine($"{appName} has been upgraded.");
