@@ -79,7 +79,6 @@ namespace toolbox
 
             string executablePath = executableDirectory + Path.DirectorySeparatorChar + appName.ToLower() + ".exe";
 
-
             // Read the file content
             string json = File.ReadAllText(_packageListPath ?? throw new InvalidOperationException());
 
@@ -95,7 +94,8 @@ namespace toolbox
                 return;
             }
 
-            if (package.OsList.Contains(Environment.OSVersion.Platform.ToString()))
+            // Check if the package is available for the current OS
+            if (!package.OsList.Contains(Environment.OSVersion.Platform.ToString()))
             {
                 Console.WriteLine($"Package {package.Name} is not available for your OS.");
                 return;
@@ -477,7 +477,7 @@ namespace toolbox
             foreach (string os in osList)
             {
                 if (os.Equals(osList.Last()))
-                    Console.Write($"{os}");
+                    Console.WriteLine($"{os}");
                 else
                     Console.Write($"{os}, ");
             }
