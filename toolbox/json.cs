@@ -15,6 +15,9 @@ public class Package
 
     [JsonPropertyName("description")]
     public string Description { get; set; }
+    
+    [JsonPropertyName("sha256")]
+    public string Sha256 { get; set; }
 }
 
 public class PackageList
