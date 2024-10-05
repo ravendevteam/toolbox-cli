@@ -12,7 +12,7 @@
     },
     {
       "name": "toolbox",
-      "version": "1.0.0",
+      "version": "1.0.1",
       "url": "https://github.com/ravendevteam/toolbox/releases/download/v1.0.0/toolbox.exe",
       "description": "Raven Package Manager",
       "sha256": "0ab53a8b7f530931dc22021b6619e24a0a20beedde58a179c683f3ff562c62b4",
