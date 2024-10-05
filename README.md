@@ -1,9 +1,20 @@
+
 # Toolbox
-Package manager for Raven software
 
-## Installing
-Download the release, open a command line and run `toolbox install toolbox`. If you don't want to install the app, just don't run the command.
+> [!NOTE]
+> All of our free software is designed to respect your privacy, while being as simple to use as possible. Our free software is licensed under the [BSD-3-Clause license](https://ravendevteam.org/files/BSD-3-Clause.txt). By using our software, you acknowledge and agree to the terms of the license.
 
-## Multiple OS support
-There is no support for macOS or Linux, but you can install most Raven apps manually on those platforms.
-If there is demand for those platforms, we will consider porting Toolbox to them. Please create an issue if you want Toolbox on your platform.
+The CLI backend for Launchpad, Raven's package manager.
+
+Made for Windows 10/11, MacOS, and Linux.
+
+## Installation
+See [Releases](https://github.com/ravendevteam/scratchpad/releases). Download the latest version for your platform.
+
+To update:
+- For Windows, run `toolbox.exe update`
+- For MacOS or Linux, run `./toolbox update`
+
+## Authors & Contributors
+
+- [Raven Development Team](https://ravendevteam.org/)
