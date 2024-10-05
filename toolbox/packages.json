@@ -7,7 +7,8 @@
       "url": "https://github.com/ravendevteam/scratchpad/releases/download/v1.1.0/scratchpad.exe",
       "description": "Simple, professional plaintext editor.",
       "sha256": "0f8ec1847ec310575f52e96b29ecec689d7445a6bfbb275724ae1d010344fe5b",
-      "requirepath": false
+      "requirepath": false,
+      "shortcut": true
     },
     {
       "name": "toolbox",
@@ -15,7 +16,8 @@
       "url": "https://github.com/ravendevteam/toolbox/releases/download/v1.0.0/toolbox.exe",
       "description": "Raven Package Manager",
       "sha256": "0ab53a8b7f530931dc22021b6619e24a0a20beedde58a179c683f3ff562c62b4",
-      "requirepath": true
+      "requirepath": true,
+      "shortcut": false
     }
   ]
 }

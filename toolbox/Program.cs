@@ -30,27 +30,42 @@ namespace toolbox
 
             UpdateCheck();
 
-            if (args[0] == "install")
-                Install(args[1]);
-
-            else if (args[0] == "update")
-                Update();
-
-            else if (args[0] == "remove")
-                Remove(args[1]);
-
-            else if (args[0] == "upgrade")
-                Upgrade(args[1]);
-            
-            else if (args[0] == "list")
-                List();
-
-            else if (args[0] == "sha256")
-                Console.WriteLine(GetChecksum(args[1]));
-
-            else
+            if (args.Length == 0)
             {
-                Console.WriteLine("No arguments were passed.");
+                Console.WriteLine("Usage: toolbox [install|update|remove|upgrade|list|sha256] <appname>");
+                return;
+            }
+
+            switch (args[0])
+            {
+                case "install":
+                    Install(args[1]);
+                    break;
+
+                case "update":
+                    Update();
+                    break;
+
+                case "remove":
+                    Remove(args[1]);
+                    break;
+
+                case "upgrade":
+                    Upgrade(args[1]);
+                    break;
+
+                case "list":
+                    List();
+                    break;
+                
+                case "sha256":
+                    Console.WriteLine($"Checksum of {args[1]}: \n{GetChecksum(args[1])}");
+                    break;
+                
+                default:
+                    Console.WriteLine("Invalid command.");
+                    Console.WriteLine("Usage: toolbox [install|update|remove|upgrade|list|sha256] <appname>");
+                    break;
             }
         }
 
@@ -78,10 +93,7 @@ namespace toolbox
                 return;
             }
 
-            Console.WriteLine($"Name: {package.Name}");
-            Console.WriteLine($"Version: {package.Version}");
-            Console.WriteLine($"URL: {package.Url}");
-            Console.WriteLine($"Description: {package.Description}");
+            InfoChecker(package.Name);
             Console.WriteLine("Okay to install? Y/n");
 
             string? response = Console.ReadLine();
@@ -106,14 +118,14 @@ namespace toolbox
                 File.Delete(executablePath);
                 return;
             }
-            
+
             // Add to PATH
             if (package.RequirePath)
             {
                 string? currentPath = Environment.GetEnvironmentVariable("PATH", EnvironmentVariableTarget.User);
 
                 // Check if the new directory is already in the PATH
-                if (!currentPath.Contains(executableDirectory))
+                if (currentPath != null && !currentPath.Contains(executableDirectory))
                 {
                     // Append the new directory to the PATH
                     string updatedPath = currentPath + ";" + executableDirectory;
@@ -127,7 +139,8 @@ namespace toolbox
 
             // Create a shortcut
             Console.WriteLine("Creating shortcut...");
-            ShortcutMaker(executablePath, package.Name, package.Description);
+            if (package.Shortcut)
+                ShortcutMaker(executablePath, package.Name, package.Description);
 
             Console.WriteLine($"{appName} has been installed to {executableDirectory}");
         }
@@ -177,7 +190,7 @@ namespace toolbox
 
             Console.WriteLine($"Removing {appName}...");
             Directory.Delete(executableDirectory, true);
-            
+
             // Remove from PATH
             if (package.RequirePath)
             {
@@ -185,7 +198,7 @@ namespace toolbox
                 string? currentPath = Environment.GetEnvironmentVariable("PATH", EnvironmentVariableTarget.User);
 
                 // Check if the directory exists in the PATH
-                if (currentPath.Contains(executableDirectory))
+                if (currentPath != null && currentPath.Contains(executableDirectory))
                 {
                     // Remove the directory from the PATH
                     string updatedPath = currentPath.Replace(executableDirectory, "").Replace(";;", ";");
@@ -201,8 +214,11 @@ namespace toolbox
             }
 
             // Remove the shortcut
-            Console.WriteLine("Removing shortcut...");
-            File.Delete(shortcutPath);
+            if (File.Exists(shortcutPath))
+            {
+                Console.WriteLine("Removing shortcut...");
+                File.Delete(shortcutPath);
+            }
 
             Console.WriteLine($"{appName} has been removed.");
         }
@@ -229,11 +245,7 @@ namespace toolbox
                 Console.WriteLine($"Package {appName} not found in the package list.");
                 return;
             }
-
-            Console.WriteLine($"Name: {package.Name}");
-            Console.WriteLine($"Version: {package.Version}");
-            Console.WriteLine($"URL: {package.Url}");
-            Console.WriteLine($"Description: {package.Description}");
+            InfoChecker(package.Name);
             Console.WriteLine("Okay to upgrade? Y/n");
 
             string? response = Console.ReadLine();
@@ -258,14 +270,14 @@ namespace toolbox
                 File.Delete(executablePath);
                 return;
             }
-            
+
             // Add to PATH
             if (package.RequirePath)
             {
                 string? currentPath = Environment.GetEnvironmentVariable("PATH", EnvironmentVariableTarget.User);
 
                 // Check if the new directory is already in the PATH
-                if (!currentPath.Contains(executableDirectory))
+                if (currentPath != null && !currentPath.Contains(executableDirectory))
                 {
                     // Append the new directory to the PATH
                     string updatedPath = currentPath + ";" + executableDirectory;
@@ -287,7 +299,7 @@ namespace toolbox
                 "https://raw.githubusercontent.com/ravendevteam/toolbox/refs/heads/main/toolbox/packages.json";
 
             string toolboxDir = string.Concat(_appdata + Path.DirectorySeparatorChar + "ravensoftware" +
-                                               Path.DirectorySeparatorChar + "toolbox");
+                                              Path.DirectorySeparatorChar + "toolbox");
             string packagePath = toolboxDir + Path.DirectorySeparatorChar + "packages.json";
             string lastUpdatePath = String.Concat(toolboxDir + Path.DirectorySeparatorChar + "lastupdate");
 
@@ -302,11 +314,11 @@ namespace toolbox
 
                 // Deserialize the JSON content into C# objects
                 var packageList = JsonSerializer.Deserialize<PackageList>(json);
-                
+
                 string pattern = @"^(https?|ftp)://[\w.-]+(\.[\w.-]+)+[\w\-.,@?^=%&:/~+#]*$";
                 Regex regex = new Regex(pattern, RegexOptions.Compiled | RegexOptions.IgnoreCase);
-                
-                if(regex.IsMatch(packageList!.UpdateUrl))
+
+                if (regex.IsMatch(packageList!.UpdateUrl))
                     updateUrl = packageList.UpdateUrl;
             }
 
@@ -322,7 +334,7 @@ namespace toolbox
 
             Console.WriteLine("\nPackage list has been updated.");
         }
-        
+
         static void List()
         {
             string json = File.ReadAllText(_packageListPath ?? throw new InvalidOperationException());
@@ -338,10 +350,7 @@ namespace toolbox
 
             foreach (var package in packageList.Packages)
             {
-                Console.WriteLine($"Name: {package.Name}");
-                Console.WriteLine($"Version: {package.Version}");
-                Console.WriteLine($"Description: {package.Description}");
-                Console.WriteLine();
+                InfoChecker(package.Name);
             }
         }
 
@@ -377,6 +386,32 @@ namespace toolbox
                     Update();
                 }
             }
+        }
+        
+        static void InfoChecker(string appName)
+        {
+            string json = File.ReadAllText(_packageListPath ?? throw new InvalidOperationException());
+
+            // Deserialize the JSON content into C# objects
+            var packageList = JsonSerializer.Deserialize<PackageList>(json);
+
+            var package =
+                packageList?.Packages.FirstOrDefault(p => p.Name.Equals(appName, StringComparison.OrdinalIgnoreCase));
+
+            if (package == null)
+            {
+                return;
+            }
+            
+            string addToPath = package.RequirePath ? "Yes" : "No";
+            string isCli = !package.Shortcut ? "Yes" : "No";
+
+            Console.WriteLine($"Name: {package.Name}");
+            Console.WriteLine($"Version: {package.Version}");
+            Console.WriteLine($"URL: {package.Url}");
+            Console.WriteLine($"Description: {package.Description}");
+            Console.WriteLine($"Will be added to path: {addToPath}");
+            Console.WriteLine($"Is a CLI app: {isCli}");
         }
 
         static void DownloadFile(string url, string fileName)
@@ -455,6 +490,7 @@ namespace toolbox
     {
         void GetPath([Out, MarshalAs(UnmanagedType.LPWStr)] StringBuilder pszFile, int cchMaxPath, out IntPtr pfd,
             int fFlags);
+
         void GetIDList(out IntPtr ppidl);
         void SetIDList(IntPtr pidl);
         void GetDescription([Out, MarshalAs(UnmanagedType.LPWStr)] StringBuilder pszName, int cchMaxName);

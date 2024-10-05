@@ -18,8 +18,12 @@ public class Package
     
     [JsonPropertyName("sha256")]
     public string Sha256 { get; set; }
+    
     [JsonPropertyName("requirepath")]
     public bool RequirePath { get; set; }
+    
+    [JsonPropertyName("shortcut")]
+    public bool Shortcut { get; set; }
 }
 
 public class PackageList
