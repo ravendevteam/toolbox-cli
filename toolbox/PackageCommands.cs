@@ -58,14 +58,17 @@ public static class PackageCommands
 
         _name = package?.Name;
         _version = package?.Version;
-        _url = package?.Url;
+        //_url = package?.Url[_operatingSystem];
         _description = package?.Description;
         _sha256 = package?.Sha256;
         _requirepath = package.RequirePath;
         _shortcut = package.Shortcut;
         _osList = package?.OsList;
 
-        _exePath = Path.Combine(_exeDir, $"{_name.ToLower()}.zip");
+        Console.WriteLine(_url);
+
+        string extension = _url.Substring(_url.LastIndexOf('.') + 1);
+        _exePath = Path.Combine(_exeDir, _name.ToLower() + extension);
 
         if (!_osList.Contains(_operatingSystem))
         {

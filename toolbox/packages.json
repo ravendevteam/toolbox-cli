@@ -4,25 +4,31 @@
     {
       "name": "Scratchpad",
       "version": "1.1.0",
-      "url": "https://github.com/ravendevteam/scratchpad/releases/download/v1.1.0/scratchpad.exe",
+      "url": {
+        "Windows": "https://github.com/ravendevteam/scratchpad/releases/download/v1.1.0/scratchpad.exe",
+        "macOS": "https://github.com/ravendevteam/scratchpad/releases/download/v1.1.0/scratchpad-v1.1.0-MacOS.zip"
+      },
       "description": "Simple, professional plaintext editor.",
       "sha256": "0f8ec1847ec310575f52e96b29ecec689d7445a6bfbb275724ae1d010344fe5b",
       "requirepath": false,
       "shortcut": true,
       "os": [
-        "Win32NT"
+        "Windows",
+        "macOS"
       ]
     },
     {
       "name": "Toolbox",
       "version": "1.0.2",
-      "url": "https://github.com/ravendevteam/toolbox/releases/download/v1.0.2/toolbox.exe",
+      "url": {
+        "Windows": "https://github.com/ravendevteam/toolbox/releases/download/v1.0.2/toolbox.exe"
+      },
       "description": "The CLI backend for Launchpad, Raven's package manager.",
       "sha256": "dff8964e03589dbd2cb876c191b574db0ff08eb4332873c9cb90ab0b7a284d42",
       "requirepath": true,
       "shortcut": false,
       "os": [
-        "Win32NT"
+        "Windows"
       ]
     }
   ]

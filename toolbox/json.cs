@@ -11,7 +11,7 @@ public class Package
     public string Version { get; set; }
 
     [JsonPropertyName("url")]
-    public string Url { get; set; }
+    public Dictionary<string, string> Url { get; set; }
 
     [JsonPropertyName("description")]
     public string Description { get; set; }
