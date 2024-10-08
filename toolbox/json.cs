@@ -17,7 +17,7 @@ public class Package
     public string Description { get; set; }
     
     [JsonPropertyName("sha256")]
-    public string Sha256 { get; set; }
+    public Dictionary<string, string> Sha256 { get; set; }
     
     [JsonPropertyName("requirepath")]
     public bool RequirePath { get; set; }

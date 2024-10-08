@@ -4,7 +4,7 @@ using System.Text;
 
 namespace toolbox;
 
-public class Shortcut
+public class Shortcuts
 {
     public static void Windows(string path, string name, string description)
     {
