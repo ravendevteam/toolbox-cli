@@ -56,7 +56,9 @@ class Toolbox
 
         PackageListPath = Path.Combine(AppdataDir, "toolbox", "packages.json");
 
-        if (File.Exists(PackageListPath))
+        UpdateCheck(args[0]);
+
+        try
         {
             string json = File.ReadAllText(PackageListPath ?? throw new InvalidOperationException());
             // Deserialize the JSON content into C# objects
@@ -100,10 +102,14 @@ class Toolbox
                 ExePath = Path.Combine(ExeDir, Name.ToLower() + "." + Extension);
             }
         }
-        else
+        catch (Exception e)
         {
-            //todo: update
+            Update();
+            Console.WriteLine(
+                "Toolbox crashed unexpectedly and tried fixing itself. If the issue persists, please report it.");
+            return;
         }
+
 
         switch (args[0].ToLower())
         {
@@ -112,6 +118,12 @@ class Toolbox
                 break;
             case "sha256":
                 Console.WriteLine(FileTools.GetChecksum(args[1]));
+                break;
+            case "update":
+                Update();
+                break;
+            case "upgrade":
+                Upgrade(args[1]);
                 break;
         }
     }
@@ -143,7 +155,7 @@ class Toolbox
             Directory.Delete(ExeDir, true);
             return;
         }
-        
+
         if (Extension == "zip")
         {
             switch (OperatingSystem)
@@ -163,9 +175,107 @@ class Toolbox
                     Shortcuts.Windows(ExePath, Name, Description);
                     break;
             }
+
+        Console.WriteLine("Installation complete");
     }
 
-    public static void Infochecker(string package)
+    static void Upgrade(string package)
+    {
+        Infochecker(package);
+
+        Console.WriteLine("Okay to upgrade? Y/n");
+
+        string? response = Console.ReadLine();
+        response = response?.ToLower();
+
+        if (response != "y" && response != "yes" && response != String.Empty)
+        {
+            Console.WriteLine("Cancelling...");
+            return;
+        }
+
+        if (!Directory.Exists(ExeDir))
+            Directory.CreateDirectory(ExeDir);
+
+        Console.WriteLine($"Upgrading {Name}...");
+        FileTools.DownloadFile(Url, ExePath);
+
+        if (FileTools.GetChecksum(ExePath) != Sha256)
+        {
+            Console.WriteLine("Checksum mismatch");
+            Directory.Delete(ExeDir, true);
+            return;
+        }
+
+        if (Extension == "zip")
+        {
+            switch (OperatingSystem)
+            {
+                case "macOS":
+                    ZipFile.ExtractToDirectory(ExePath, ExeDir, true);
+                    File.Delete(ExePath);
+                    break;
+            }
+        }
+
+        Console.WriteLine("Upgrade complete");
+    }
+
+    static void Update()
+    {
+        string lastUpdatePath = Path.Combine(AppdataDir, "toolbox", "lastupdate");
+        if (UpdateUrl == null || !UpdateUrl.Contains("packages.json"))
+        {
+            UpdateUrl =
+                "https://raw.githubusercontent.com/ravendevteam/toolbox/refs/heads/crossplatform/toolbox/packages.json";
+            Console.WriteLine("Using default update URL");
+        }
+
+        FileTools.DownloadFile(UpdateUrl, PackageListPath);
+
+        using (StreamWriter outputFile = new StreamWriter(lastUpdatePath))
+        {
+            outputFile.WriteLine(DateTimeOffset.UtcNow.ToUnixTimeSeconds().ToString());
+        }
+
+        Console.WriteLine("\nUpdate complete");
+    }
+
+    static void UpdateCheck(string args0)
+    {
+        long timeNow = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+
+        string lastUpdatePath = Path.Combine(AppdataDir, "toolbox", "lastupdate");
+
+        if (!File.Exists(lastUpdatePath) || !File.Exists(PackageListPath) ||
+            !File.ReadAllText(PackageListPath).Contains("updateurl"))
+        {
+            Console.WriteLine("Automatically updating Raven Toolbox");
+            Update();
+        }
+
+        else
+        {
+            long lastUpdate;
+            using (StreamReader reader = new StreamReader(lastUpdatePath))
+            {
+                string lastUpdateString = reader.ReadToEnd();
+                lastUpdate = long.Parse(lastUpdateString);
+            }
+
+            long timeDif = timeNow - lastUpdate;
+
+            if (timeDif > 86400)
+            {
+                Console.WriteLine("Automatically updating Raven Toolbox");
+                Update();
+                if (args0.ToLower() == "update")
+                    return;
+            }
+        }
+    }
+
+    static void Infochecker(string package)
     {
         string addToPath = RequirePath ? "Yes" : "No";
         string isCli = !Shortcut ? "Yes" : "No";

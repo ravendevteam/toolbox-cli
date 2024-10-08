@@ -11,13 +11,12 @@ public class Shortcuts
         // ReSharper disable once SuspiciousTypeConversion.Global
         IShellLink link = (IShellLink)new ShellLink();
         string startMenuFile = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.StartMenu),
-            name, ".lnk");
-        string desktopFile = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Desktop), name, ".lnk");
+            name + ".lnk");
+        string desktopFile = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Desktop), name + ".lnk");
 
         // Setup shortcut information
         link.SetDescription(description);
         link.SetPath(path);
-
         // Save it
         // ReSharper disable once SuspiciousTypeConversion.Global
         IPersistFile file = (IPersistFile)link;
