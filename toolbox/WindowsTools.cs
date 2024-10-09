@@ -4,9 +4,9 @@ using System.Text;
 
 namespace toolbox;
 
-public class Shortcuts
+public class WindowsTools
 {
-    public static void Windows(string path, string name, string description)
+    public static void AddShortcut(string path, string name, string description)
     {
         // ReSharper disable once SuspiciousTypeConversion.Global
         IShellLink link = (IShellLink)new ShellLink();
@@ -22,6 +22,56 @@ public class Shortcuts
         IPersistFile file = (IPersistFile)link;
         file.Save(startMenuFile, false);
         File.Copy(startMenuFile, desktopFile, true);
+    }
+
+    public static void RemoveShortcut(string name)
+    {
+        string startMenuFile = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.StartMenu),
+            name + ".lnk");
+        string desktopFile = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Desktop), name + ".lnk");
+
+        if (File.Exists(startMenuFile))
+            File.Delete(startMenuFile);
+
+        if (File.Exists(desktopFile))
+            File.Delete(desktopFile);
+    }
+
+    public static void AddPath(string executableDirectory)
+    {
+        string? currentPath = Environment.GetEnvironmentVariable("PATH", EnvironmentVariableTarget.User);
+
+        // Check if the new directory is already in the PATH
+        if (currentPath != null && !currentPath.Contains(executableDirectory))
+        {
+            // Append the new directory to the PATH
+            string updatedPath = currentPath + ";" + executableDirectory;
+
+            // Set the updated PATH environment variable
+            Environment.SetEnvironmentVariable("PATH", updatedPath, EnvironmentVariableTarget.User);
+
+            Console.WriteLine($"Added {executableDirectory} to the user PATH.");
+        }
+    }
+
+    public static void RemovePath(string executableDirectory)
+    {
+        string? currentPath = Environment.GetEnvironmentVariable("PATH", EnvironmentVariableTarget.User);
+
+        // Check if the directory exists in the PATH
+        if (currentPath != null && currentPath.Contains(executableDirectory))
+        {
+            // Remove the directory from the PATH
+            string updatedPath = currentPath.Replace(executableDirectory, "").Replace(";;", ";");
+
+            // Remove any trailing or leading semicolons
+            updatedPath = updatedPath.Trim(';');
+
+            // Set the updated PATH environment variable
+            Environment.SetEnvironmentVariable("PATH", updatedPath, EnvironmentVariableTarget.User);
+
+            Console.WriteLine($"Removed {executableDirectory} from the user PATH.");
+        }
     }
 }
 

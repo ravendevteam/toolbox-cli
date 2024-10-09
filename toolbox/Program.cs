@@ -25,6 +25,8 @@ class Toolbox
 
     public static string? UpdateUrl;
 
+    public static Dictionary<string, string> Packages;
+
     public static string? Name;
     public static string? Version;
     public static string? Url;
@@ -95,7 +97,7 @@ class Toolbox
                         break;
 
                     case "macOS":
-                        ExeDir = "/Applications";
+                        ExeDir = RequirePath ? "/usr/local/bin" : "/Applications";
                         break;
                 }
 
@@ -124,6 +126,12 @@ class Toolbox
                 break;
             case "upgrade":
                 Upgrade(args[1]);
+                break;
+            case "remove":
+                Remove(args[1]);
+                break;
+            case "list":
+                List();
                 break;
         }
     }
@@ -172,7 +180,15 @@ class Toolbox
             {
                 case "Windows":
                     Console.WriteLine("Creating Shortcuts...");
-                    Shortcuts.Windows(ExePath, Name, Description);
+                    WindowsTools.AddShortcut(ExePath, Name, Description);
+                    break;
+            }
+
+        if (RequirePath)
+            switch (OperatingSystem)
+            {
+                case "Windows":
+                    WindowsTools.AddPath(ExeDir);
                     break;
             }
 
@@ -218,7 +234,58 @@ class Toolbox
             }
         }
 
+        if (RequirePath)
+            switch (OperatingSystem)
+            {
+                case "Windows":
+                    WindowsTools.AddPath(ExeDir);
+                    break;
+            }
+
         Console.WriteLine("Upgrade complete");
+    }
+
+    static void Remove(string Package)
+    {
+        Infochecker(Package);
+
+        Console.WriteLine("Okay to remove? Y/n");
+
+        string? response = Console.ReadLine();
+        response = response?.ToLower();
+
+        if (response != "y" && response != "yes" && response != String.Empty)
+        {
+            Console.WriteLine("Cancelling...");
+            return;
+        }
+
+        Console.WriteLine($"Removing {Name}...");
+
+        if (Directory.Exists(ExeDir))
+            Directory.Delete(ExeDir, true);
+
+        if (File.Exists(ExePath))
+            File.Delete(ExePath);
+
+        if (Shortcut)
+            switch (OperatingSystem)
+            {
+                case "Windows":
+                    Console.WriteLine("Removing Shortcuts...");
+                    WindowsTools.RemoveShortcut(Name);
+                    break;
+            }
+
+        if (RequirePath)
+            switch (OperatingSystem)
+            {
+                case "Windows":
+                    WindowsTools.RemovePath(ExeDir);
+                    break;
+            }
+
+        Console.WriteLine("Removal complete");
     }
 
     static void Update()
@@ -275,21 +342,49 @@ class Toolbox
         }
     }
 
-    static void Infochecker(string package)
+    static void List()
     {
-        string addToPath = RequirePath ? "Yes" : "No";
-        string isCli = !Shortcut ? "Yes" : "No";
+        string json = File.ReadAllText(PackageListPath ?? throw new InvalidOperationException());
 
-        Console.WriteLine($"Name: {Name}");
-        Console.WriteLine($"Version: {Version}");
-        Console.WriteLine($"URL: {Url}");
-        Console.WriteLine($"Description: {Description}");
+        // Deserialize the JSON content into C# objects
+        var packageList = JsonSerializer.Deserialize<PackageList>(json);
+
+        if (packageList == null)
+        {
+            Console.WriteLine("No packages found.");
+            return;
+        }
+
+        foreach (var package in packageList.Packages)
+        {
+            Infochecker(package.Name);
+            Console.WriteLine("\n");
+        }
+    }
+
+    static void Infochecker(string packageName)
+    {
+        string json = File.ReadAllText(PackageListPath ?? throw new InvalidOperationException());
+        // Deserialize the JSON content into C# objects
+        var packageList = JsonSerializer.Deserialize<PackageList>(json);
+
+        var package =
+            packageList?.Packages.FirstOrDefault(
+                p => p.Name.Equals(packageName, StringComparison.OrdinalIgnoreCase));
+
+        string addToPath = package!.RequirePath ? "Yes" : "No";
+        string isCli = package.Shortcut ? "Yes" : "No";
+
+        Console.WriteLine($"Name: {package.Name}");
+        Console.WriteLine($"Version: {package.Version}");
+        Console.WriteLine($"URL: {package.Url}");
+        Console.WriteLine($"Description: {package.Description}");
         Console.WriteLine($"Will be added to path: {addToPath}");
         Console.WriteLine($"Is a CLI app: {isCli}");
         Console.Write("Available for: ");
-        foreach (string os in OsList)
+        foreach (string os in package.OsList)
         {
-            if (os.Equals(OsList.Last()))
+            if (os.Equals(package.OsList.Last()))
                 Console.WriteLine($"{os}");
             else
                 Console.Write($"{os}, ");
